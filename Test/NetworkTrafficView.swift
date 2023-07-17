@@ -7,67 +7,6 @@
 
 import SwiftUI
 
-// defines OptionSet, which corners to be rounded – same as UIRectCorner
-struct RectCorner: OptionSet {
-    
-    let rawValue: Int
-        
-    static let topLeft = RectCorner(rawValue: 1 << 0)
-    static let topRight = RectCorner(rawValue: 1 << 1)
-    static let bottomRight = RectCorner(rawValue: 1 << 2)
-    static let bottomLeft = RectCorner(rawValue: 1 << 3)
-    
-    static let allCorners: RectCorner = [.topLeft, topRight, .bottomLeft, .bottomRight]
-}
-
-
-// draws shape with specified rounded corners applying corner radius
-struct RoundedCornersShape: Shape {
-    
-    var radius: CGFloat = .zero
-    var corners: RectCorner = .allCorners
-
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-
-        let p1 = CGPoint(x: rect.minX, y: corners.contains(.topLeft) ? rect.minY + radius  : rect.minY )
-        let p2 = CGPoint(x: corners.contains(.topLeft) ? rect.minX + radius : rect.minX, y: rect.minY )
-
-        let p3 = CGPoint(x: corners.contains(.topRight) ? rect.maxX - radius : rect.maxX, y: rect.minY )
-        let p4 = CGPoint(x: rect.maxX, y: corners.contains(.topRight) ? rect.minY + radius  : rect.minY )
-
-        let p5 = CGPoint(x: rect.maxX, y: corners.contains(.bottomRight) ? rect.maxY - radius : rect.maxY )
-        let p6 = CGPoint(x: corners.contains(.bottomRight) ? rect.maxX - radius : rect.maxX, y: rect.maxY )
-
-        let p7 = CGPoint(x: corners.contains(.bottomLeft) ? rect.minX + radius : rect.minX, y: rect.maxY )
-        let p8 = CGPoint(x: rect.minX, y: corners.contains(.bottomLeft) ? rect.maxY - radius : rect.maxY )
-
-        
-        path.move(to: p1)
-        path.addArc(tangent1End: CGPoint(x: rect.minX, y: rect.minY),
-                    tangent2End: p2,
-                    radius: radius)
-        path.addLine(to: p3)
-        path.addArc(tangent1End: CGPoint(x: rect.maxX, y: rect.minY),
-                    tangent2End: p4,
-                    radius: radius)
-        path.addLine(to: p5)
-        path.addArc(tangent1End: CGPoint(x: rect.maxX, y: rect.maxY),
-                    tangent2End: p6,
-                    radius: radius)
-        path.addLine(to: p7)
-        path.addArc(tangent1End: CGPoint(x: rect.minX, y: rect.maxY),
-                    tangent2End: p8,
-                    radius: radius)
-        path.closeSubpath()
-
-        return path
-    }
-}
-
-
-
-
 let upload: [Double] = [1,3,1,4,10,40,10,3,1,13,1,3,1,20,10,8,13,19,2,1,2,0.3,1,1,0.2,0.1,3,5,0.3,0.1,1,3,1,4,10,40,20,17,18,10,3,1,13,1,3,1,20,3,1,2]
 let download: [Double] = [0.1,3,5,0.3,0.1,1,3,1,4,10,0.1,3,5,0.3,0.1,1,3,1,4,10,40,20,17,18,10,3,1,13,1,3,1,20,3,1,2,40,20,17,18,10,3,1,13,1,3,1,20,3,1,2]
 
@@ -77,8 +16,8 @@ struct NetworkTrafficView: View {
     @State private var uploadData: [Double] = upload
     @State private var downloadData: [Double] = download
 
-    let barWidth: CGFloat = 10
-    let shadowRadius: CGFloat = 2
+    let barWidth: CGFloat = 8
+    let shadowRadius: CGFloat = 1
     let numberOfHLines: Int = 2
 
     var body: some View {
@@ -88,7 +27,7 @@ struct NetworkTrafficView: View {
                 ChartView(data: downloadData,
                           barWidth: barWidth,
                           shadowRadius: shadowRadius,
-                          gradientColors: [.blue, Color(red: 0/255, green: 169/255, blue: 249/255)],
+                          gradientColors: [.green, Color(red: 121/255, green: 223/255, blue: 41/255)],
                           numberOfHLines: numberOfHLines)
                 VStack() {
                     Text("\(Int(downloadData.max() ?? 0)) Mb/s")
@@ -111,7 +50,7 @@ struct NetworkTrafficView: View {
                 ChartView(data: upload.reversed(),
                           barWidth: barWidth,
                           shadowRadius: shadowRadius,
-                          gradientColors: [.red, Color(red: 255/255, green: 126/255, blue: 0)],
+                          gradientColors: [.red, Color(red: 245/255, green: 140/255, blue: 11/255)],
                           numberOfHLines: numberOfHLines)
                     .rotationEffect(.degrees(180)) // Mirror upside down
                 VStack() {
@@ -125,6 +64,8 @@ struct NetworkTrafficView: View {
                 }
             }
         }
+        .padding(20)
+        .addBorder(.gray.opacity(0.3), width: 0.5, cornerRadius: 5)
     }
 }
 
@@ -175,10 +116,10 @@ struct ChartView: View {
 //                    .position(x: x, y: geometry.size.height - ((geometry.size.height / CGFloat(maxValue)) * maxValue) / 2)
                     //bar
                     VStack {
-                        RoundedCornersShape(radius: barWidth*0.4, corners: [RectCorner.topLeft, RectCorner.topRight])
+                        RoundedCornersShape(radius: barWidth*0.5, corners: [RectCorner.topLeft, RectCorner.topRight])
                             .fill(gradientColor(for: data[index], maxValue: maxValue))
                             .frame(width: barWidth, height: barHeight)
-                            .shadow(color: .gray, radius: shadowRadius, x: 0, y: 0)
+                            .shadow(color: .gray.opacity(0.3), radius: shadowRadius, x: 0, y: 0)
                     }
                     .position(x: x, y: geometry.size.height - barHeight / 2)
                 }
@@ -188,14 +129,14 @@ struct ChartView: View {
     func gradientColor(for value: Double, maxValue: Double) -> LinearGradient {
         let startColor = gradientColors[0]
         let endColor = gradientColors[1]
-        let progress = value / maxValue
         return LinearGradient(gradient: Gradient(colors: [startColor, endColor]), startPoint: .top, endPoint: .bottom)
 //            .rotationEffect(.degrees(180 * progress))
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
+struct NetworkTrafficView_Previews: PreviewProvider {
     static var previews: some View {
         NetworkTrafficView()
+            .padding()
     }
 }
